@@ -1,0 +1,8 @@
+# Python dependencies for ML service
+fastapi
+uvicorn
+scikit-learn
+pandas
+torch
+tensorflow
+clickhouse-driver

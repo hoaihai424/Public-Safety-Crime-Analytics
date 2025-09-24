@@ -1,0 +1,5 @@
+# Python dependencies for ETL jobs
+pyspark
+pandas
+cassandra-driver
+clickhouse-driver

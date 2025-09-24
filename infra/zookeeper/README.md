@@ -1,0 +1,1 @@
+This directory contains configuration and setup files for Zookeeper.

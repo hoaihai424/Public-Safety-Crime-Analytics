@@ -1,0 +1,5 @@
+# Python dependencies for Web API service
+fastapi
+uvicorn
+requests
+clickhouse-driver

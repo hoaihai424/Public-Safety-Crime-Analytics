@@ -1,0 +1,1 @@
+This directory contains raw, unprocessed data files, typically ingested from external sources.

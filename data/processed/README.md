@@ -1,0 +1,1 @@
+This directory contains processed data files ready for analysis or consumption by other services.

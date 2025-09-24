@@ -1,0 +1,31 @@
+# # Ignore sensitive files
+# .env
+
+# # Ignore Python artifacts
+# __pycache__/
+# *.pyc
+# *.pyo
+# *.pyd
+# .Python
+
+# # Ignore dependency directories
+# node_modules/
+# venv/
+# .venv/
+# env/
+# .env/
+
+# # Ignore data files
+# data/
+
+# # Ignore IDE/editor directories
+# .vscode/
+# .idea/
+
+# # Build artifacts
+# build/
+# dist/
+# *.egg-info/
+
+# # Notebook checkpoints
+# .ipynb_checkpoints/

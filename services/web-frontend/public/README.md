@@ -1,0 +1,1 @@
+This directory contains public assets for the web frontend, such as images and the main HTML file.

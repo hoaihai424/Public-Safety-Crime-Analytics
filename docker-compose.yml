@@ -1,0 +1,109 @@
+version: '3.8'
+
+services:
+  # Zookeeper
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.0.1
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  # Kafka
+  kafka:
+    image: confluentinc/cp-kafka:7.0.1
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+
+  # Cassandra
+  cassandra:
+    image: cassandra:4.0
+    container_name: cassandra
+    ports:
+      - "9042:9042"
+    volumes:
+      - ./infra/cassandra/init.cql:/docker-entrypoint-initdb.d/init.cql
+    environment:
+      - CASSANDRA_USER=${CASSANDRA_USER}
+      - CASSANDRA_PASSWORD=${CASSANDRA_PASSWORD}
+
+  # Clickhouse
+  clickhouse:
+    image: clickhouse/clickhouse-server:22.3
+    container_name: clickhouse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - ./infra/clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD}
+      - CLICKHOUSE_DB=${CLICKHOUSE_DB}
+
+  # Data Ingestion Service
+  services-ingestion:
+    build:
+      context: ./services-ingestion
+    container_name: services-ingestion
+    ports:
+      - "8001:8000"
+    depends_on:
+      - cassandra
+    env_file:
+      - .env
+
+  # Web API
+  web-api:
+    build:
+      context: ./services/web-api
+    container_name: web-api
+    ports:
+      - "8000:8000"
+    depends_on:
+      - clickhouse
+      - ml-service
+    env_file:
+      - .env
+
+  # Web Frontend
+  web-frontend:
+    build:
+      context: ./services/web-frontend
+    container_name: web-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - web-api
+
+  # ML Service
+  ml-service:
+    build:
+      context: ./services/ml-service
+    container_name: ml-service
+    ports:
+      - "8002:8000"
+    depends_on:
+      - clickhouse
+    env_file:
+      - .env
+
+  # Spark (Example for ETL jobs - might be run manually)
+  # spark-master:
+  #   image: bitnami/spark:3
+  #   container_name: spark-master
+  #   ...
+
+networks:
+  default:
+    driver: bridge

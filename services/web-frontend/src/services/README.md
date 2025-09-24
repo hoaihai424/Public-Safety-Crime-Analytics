@@ -1,0 +1,1 @@
+This directory contains service-related modules for the web frontend, such as API clients.

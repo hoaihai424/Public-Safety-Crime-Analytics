@@ -1,0 +1,1 @@
+This directory contains internal modules and utilities for the web API service.

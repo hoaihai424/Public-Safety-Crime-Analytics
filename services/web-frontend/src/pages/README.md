@@ -1,0 +1,1 @@
+This directory contains page-level React components for the web frontend.

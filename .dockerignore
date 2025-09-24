@@ -1,0 +1,17 @@
+# .dockerignore
+.git
+.gitignore
+.env
+**/node_modules
+**/__pycache__
+*.pyc
+*.pyo
+*.pyd
+data/
+notebooks/
+.vscode/
+.idea/
+build/
+dist/
+*.swo
+*.swp

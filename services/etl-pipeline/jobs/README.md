@@ -1,0 +1,1 @@
+This directory contains Spark jobs and other ETL scripts.

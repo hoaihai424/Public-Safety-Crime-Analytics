@@ -1,0 +1,1 @@
+This directory contains API endpoint definitions for the ingestion service.

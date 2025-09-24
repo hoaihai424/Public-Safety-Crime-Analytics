@@ -1,0 +1,6 @@
+# Python dependencies for Data Ingestion service
+fastapi
+uvicorn
+python-multipart
+pandas
+cassandra-driver
