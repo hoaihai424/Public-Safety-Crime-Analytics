@@ -4,26 +4,83 @@ CREATE DATABASE IF NOT EXISTS crime_data;
 -- Use the database
 USE crime_data;
 
--- Create a table for aggregated crime statistics by area
-CREATE TABLE IF NOT EXISTS crime_stats_by_area (
-    area_id String,
-    report_month Date,
-    crime_type String,
-    incident_count UInt64,
-    poverty_rate Float32,
-    unemployment_rate Float32,
-    population UInt64
+-- Create dim date table
+CREATE TABLE IF NOT EXISTS dim_date (
+    id UUID PRIMARY KEY,
+    date TINYINT,
+    month TINYINT,
+    year SMALLINT,
+    quarter TINYINT,
+    day_of_week TINYINT,
+    is_holiday BOOLEAN,
+    is_weekend BOOLEAN
 ) ENGINE = MergeTree()
-PARTITION BY toYYYYMM(report_month)
-ORDER BY (area_id, report_month, crime_type);
+ ORDER BY id;
 
--- Create a table for crime hotspot predictions
-CREATE TABLE IF NOT EXISTS crime_hotspots (
-    hotspot_id String,
-    prediction_date Date,
-    latitude Float64,
-    longitude Float64,
-    predicted_crime_level UInt8,
-    confidence_score Float32
+
+-- Create dim time table
+CREATE TABLE IF NOT EXISTS dim_time (
+    id UUID PRIMARY KEY,
+    hour TINYINT,
+    minute TINYINT,
+    second TINYINT
 ) ENGINE = MergeTree()
-ORDER BY (prediction_date, hotspot_id);
+ ORDER BY id;
+
+
+-- Create dim primary type table
+CREATE TABLE IF NOT EXISTS dim_primary_type (
+    id UUID PRIMARY KEY,
+    name STRING
+) ENGINE = MergeTree()
+ ORDER BY id;
+
+
+-- Create dim crime table
+CREATE TABLE IF NOT EXISTS dim_crime (
+    id UUID PRIMARY KEY,
+    iucr STRING,
+    fbi_code STRING,
+    primary_type UUID,
+    description STRING
+) ENGINE = MergeTree()
+ ORDER BY id;
+
+
+-- Create dim location table
+CREATE TABLE IF NOT EXISTS dim_location (
+    id UUID PRIMARY KEY,
+    location STRING,
+    latitude FLOAT64,
+    longitude FLOAT64,
+    block STRING,
+    location_description STRING
+) ENGINE = MergeTree()
+ ORDER BY id;
+
+
+-- Create dim patrol unit table
+CREATE TABLE IF NOT EXISTS dim_patrol_unit (
+    id UUID PRIMARY KEY,
+    beat STRING,
+    district STRING,
+    ward STRING,
+    community_area STRING
+) ENGINE = MergeTree()
+ ORDER BY id;
+
+
+-- Create fact case table
+CREATE TABLE IF NOT EXISTS fact_case (
+    id UUID PRIMARY KEY,
+    case_number STRING,
+    arrest_made BOOLEAN,
+    domestic BOOLEAN,
+    incident_time TIMESTAMP,
+    location UUID,
+    patrol_unit UUID,
+    crime UUID,
+    date_id UUID,
+    time_id UUID
+) ENGINE = MergeTree()
+ ORDER BY id;
