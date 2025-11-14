@@ -1,86 +1,99 @@
--- Create the main database if it doesn't exist
-CREATE DATABASE IF NOT EXISTS crime_data;
+-- Create database
+CREATE DATABASE IF NOT EXISTS crime_analytics;
 
--- Use the database
-USE crime_data;
+USE crime_analytics;
 
--- Create dim date table
-CREATE TABLE IF NOT EXISTS dim_date (
-    id UUID PRIMARY KEY,
-    date TINYINT,
-    month TINYINT,
-    year SMALLINT,
-    quarter TINYINT,
-    day_of_week TINYINT,
-    is_holiday BOOLEAN,
-    is_weekend BOOLEAN
+-- DROP ALL TABLES IF THEY EXIST
+DROP TABLE IF EXISTS crime_analytics.dim_date;
+DROP TABLE IF EXISTS crime_analytics.dim_time;
+DROP TABLE IF EXISTS crime_analytics.dim_primary_type;
+DROP TABLE IF EXISTS crime_analytics.dim_crime;
+DROP TABLE IF EXISTS crime_analytics.dim_location;
+DROP TABLE IF EXISTS crime_analytics.dim_patrol_unit;
+DROP TABLE IF EXISTS crime_analytics.fact_case;
+
+-- Date Dimension
+CREATE TABLE crime_analytics.dim_date (
+    id String,
+    date Date,
+    month UInt8,
+    quarter UInt8,
+    year UInt16,
+    day_of_week String,
+    is_weekend UInt8
 ) ENGINE = MergeTree()
- ORDER BY id;
+ORDER BY (year, month, date)
+PARTITION BY toYYYYMM(date);
 
+ALTER TABLE crime_analytics.dim_date ADD INDEX idx_date (id) TYPE minmax GRANULARITY 1;
 
--- Create dim time table
-CREATE TABLE IF NOT EXISTS dim_time (
-    id UUID PRIMARY KEY,
-    hour TINYINT,
-    minute TINYINT,
-    second TINYINT
+-- Time Dimension
+CREATE TABLE IF NOT EXISTS crime_analytics.dim_time (
+    id String,
+    hour UInt8,
+    minute UInt8,
+    second UInt8
 ) ENGINE = MergeTree()
- ORDER BY id;
+ORDER BY (hour, minute, second);
 
-
--- Create dim primary type table
-CREATE TABLE IF NOT EXISTS dim_primary_type (
-    id UUID PRIMARY KEY,
-    name STRING
+-- Time Dimension (00:00:00 to 23:59:00, only HH:MM:00)
+CREATE TABLE crime_analytics.dim_time (
+    id String,                    -- Format: HHMM00 (e.g., "143000" for 14:30:00)
+    hour UInt8,                   -- 0-23
+    minute UInt8,                 -- 0-59
+    second UInt8                  -- Always 0 (seconds rounded to 0)
 ) ENGINE = MergeTree()
- ORDER BY id;
+ORDER BY (hour, minute)
 
-
--- Create dim crime table
-CREATE TABLE IF NOT EXISTS dim_crime (
-    id UUID PRIMARY KEY,
-    iucr STRING,
-    fbi_code STRING,
-    primary_type UUID,
-    description STRING
+-- Primary Type Dimension
+CREATE TABLE IF NOT EXISTS crime_analytics.dim_primary_type (
+    id UInt64,
+    name String
 ) ENGINE = MergeTree()
- ORDER BY id;
+ORDER BY id;
 
-
--- Create dim location table
-CREATE TABLE IF NOT EXISTS dim_location (
-    id UUID PRIMARY KEY,
-    location STRING,
-    latitude FLOAT64,
-    longitude FLOAT64,
-    block STRING,
-    location_description STRING
+-- Crime Dimension
+CREATE TABLE IF NOT EXISTS crime_analytics.dim_crime (
+    id UInt64,
+    iucr String,
+    primary_type UInt64,
+    description String,
+    fbi_code String
 ) ENGINE = MergeTree()
- ORDER BY id;
+ORDER BY id;
 
-
--- Create dim patrol unit table
-CREATE TABLE IF NOT EXISTS dim_patrol_unit (
-    id UUID PRIMARY KEY,
-    beat STRING,
-    district STRING,
-    ward STRING,
-    community_area STRING
+-- Location Dimension
+CREATE TABLE IF NOT EXISTS crime_analytics.dim_location (
+    id UInt64,
+    location_description String,
+    block String,
+    latitude Float64,
+    longitude Float64,
+    location String
 ) ENGINE = MergeTree()
- ORDER BY id;
+ORDER BY id;
 
-
--- Create fact case table
-CREATE TABLE IF NOT EXISTS fact_case (
-    id UUID PRIMARY KEY,
-    case_number STRING,
-    arrest_made BOOLEAN,
-    domestic BOOLEAN,
-    incident_time TIMESTAMP,
-    location UUID,
-    patrol_unit UUID,
-    crime UUID,
-    date_id UUID,
-    time_id UUID
+-- Patrol Unit Dimension
+CREATE TABLE IF NOT EXISTS crime_analytics.dim_patrol_unit (
+    id UInt64,
+    beat Int32,
+    district Int32,
+    ward Int32,
+    community_area Int32
 ) ENGINE = MergeTree()
- ORDER BY id;
+ORDER BY id;
+
+-- Case Fact Table
+CREATE TABLE IF NOT EXISTS crime_analytics.fact_case (
+    id UInt64,
+    case_number String,
+    date_id String,
+    time_id String,
+    crime_id Nullable(UInt64),
+    location_id Nullable(UInt64),
+    patrol_unit_id Nullable(UInt64),
+    arrest UInt8,
+    domestic UInt8
+) ENGINE = MergeTree()
+ORDER BY (date_id, time_id, id)
+PARTITION BY substring(date_id, 1, 6);
