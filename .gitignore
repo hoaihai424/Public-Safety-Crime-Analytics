@@ -14,9 +14,17 @@ venv/
 .venv/
 env/
 .env/
+metadata
+metadata_dropped
+preprocessed_configs/
 
 # Ignore data files
 data/
+
+# Clickhouse local files
+store/
+clickhouse.log
+uuid
 
 # Ignore IDE/editor directories
 .vscode/
@@ -34,3 +42,4 @@ dist/
 # Testing files
 testing.ipynb
 testing.py
+output.txt
