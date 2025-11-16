@@ -1,65 +1,80 @@
--- init database for postgresql
-CREATE DATABASE crime_data;
-\c crime_data;
+-- Drop existing tables if they exist (in reverse order of dependencies)
+DROP TABLE IF EXISTS case_report CASCADE;
+DROP TABLE IF EXISTS patrol_unit CASCADE;
+DROP TABLE IF EXISTS location CASCADE;
+DROP TABLE IF EXISTS crime CASCADE;
+DROP TABLE IF EXISTS primary_type CASCADE;
 
--- Create primary type table
-CREATE TABLE IF NOT EXISTS primary_type (
-    id UUID PRIMARY KEY,
-    name TEXT
-);  
+-- Create primary_type table
+CREATE TABLE primary_type (
+    id BIGINT PRIMARY KEY,
+    name TEXT NOT NULL
+);
+
+CREATE INDEX idx_primary_type_name ON primary_type(name);
 
 -- Create crime table
-CREATE TABLE IF NOT EXISTS crime (
-    id UUID PRIMARY KEY,
+CREATE TABLE crime (
+    id BIGINT PRIMARY KEY,
     iucr TEXT,
-    fbi_code TEXT,
-    primary_type UUID REFERENCES primary_type(id),
-    description TEXT
-);  
+    primary_type BIGINT REFERENCES primary_type(id),
+    description TEXT,
+    fbi_code TEXT
+);
 
-CREATE INDEX IF NOT EXISTS crimes_iucr_idx ON crime (iucr);
-CREATE INDEX IF NOT EXISTS crimes_primary_type_idx ON crime (primary_type);
+CREATE INDEX idx_crime_iucr ON crime(iucr);
+CREATE INDEX idx_crime_primary_type ON crime(primary_type);
+CREATE INDEX idx_crime_fbi_code ON crime(fbi_code);
 
 -- Create location table
-CREATE TABLE IF NOT EXISTS location (
-    id UUID PRIMARY KEY,
-    location TEXT,
-    latitude DOUBLE PRECISION,
-    longitude DOUBLE PRECISION,
+CREATE TABLE location (
+    id BIGINT PRIMARY KEY,
+    location_description TEXT,
     block TEXT,
-    location_description TEXT
+    latitude DOUBLE PRECISION DEFAULT 0.0,
+    longitude DOUBLE PRECISION DEFAULT 0.0,
+    location TEXT
 );
 
-CREATE INDEX IF NOT EXISTS location_description_idx ON location (location_description);
-CREATE INDEX IF NOT EXISTS locations_block_idx ON location (block);
+CREATE INDEX idx_location_description ON location(location_description);
+CREATE INDEX idx_location_block ON location(block);
+CREATE INDEX idx_location_coordinates ON location(latitude, longitude);
 
--- Create patrol unit table
-CREATE TABLE IF NOT EXISTS patrol_unit (
-    id UUID PRIMARY KEY,
-    beat TEXT,
-    district TEXT,
-    ward TEXT,
-    community_area TEXT
+-- Create patrol_unit table
+CREATE TABLE patrol_unit (
+    id BIGINT PRIMARY KEY,
+    beat INTEGER DEFAULT -1,
+    district INTEGER DEFAULT -1,
+    ward INTEGER DEFAULT -1,
+    community_area INTEGER DEFAULT -1
 );
 
-CREATE INDEX IF NOT EXISTS patrol_units_beat_idx ON patrol_unit (beat);
-CREATE INDEX IF NOT EXISTS patrol_units_district_idx ON patrol_unit (district);
+CREATE INDEX idx_patrol_unit_beat ON patrol_unit(beat);
+CREATE INDEX idx_patrol_unit_district ON patrol_unit(district);
+CREATE INDEX idx_patrol_unit_ward ON patrol_unit(ward);
+CREATE INDEX idx_patrol_unit_community_area ON patrol_unit(community_area);
 
--- Create case table
-CREATE TABLE IF NOT EXISTS case_report (
-    id UUID PRIMARY KEY,
-    case_number TEXT,
-    arrest_made BOOLEAN,
-    domestic BOOLEAN,
-    incident_time TIMESTAMP,
-    location UUID REFERENCES location(id),
-    patrol_unit UUID REFERENCES patrol_unit(id),
-    crime UUID REFERENCES crime(id)
+-- Create case_report table (renamed from 'case' to avoid SQL keyword conflict)
+CREATE TABLE case_report (
+    id BIGINT PRIMARY KEY,
+    case_number TEXT NOT NULL,
+    crime_id BIGINT REFERENCES crime(id),
+    location_id BIGINT REFERENCES location(id),
+    patrol_unit_id BIGINT REFERENCES patrol_unit(id),
+    date DATE,
+    time TEXT,
+    arrest INTEGER DEFAULT 0,
+    domestic INTEGER DEFAULT 0
 );
 
-CREATE INDEX IF NOT EXISTS cases_case_number_idx ON case_report (case_number);
-CREATE INDEX IF NOT EXISTS cases_crime_idx ON case_report (crime);
-CREATE INDEX IF NOT EXISTS cases_location_idx ON case_report (location);
-CREATE INDEX IF NOT EXISTS cases_patrol_unit_idx ON case_report (patrol_unit);
+CREATE INDEX idx_case_report_case_number ON case_report(case_number);
+CREATE INDEX idx_case_report_crime_id ON case_report(crime_id);
+CREATE INDEX idx_case_report_location_id ON case_report(location_id);
+CREATE INDEX idx_case_report_patrol_unit_id ON case_report(patrol_unit_id);
+CREATE INDEX idx_case_report_date ON case_report(date);
+CREATE INDEX idx_case_report_arrest ON case_report(arrest);
+CREATE INDEX idx_case_report_domestic ON case_report(domestic);
 
-
+-- Create composite index for common queries
+CREATE INDEX idx_case_report_date_crime ON case_report(date, crime_id);
+CREATE INDEX idx_case_report_date_location ON case_report(date, location_id);
