@@ -31,8 +31,6 @@ CREATE TABLE location (
     id BIGINT PRIMARY KEY,
     location_description TEXT,
     block TEXT,
-    latitude DOUBLE PRECISION DEFAULT 0.0,
-    longitude DOUBLE PRECISION DEFAULT 0.0,
     location TEXT
 );
 

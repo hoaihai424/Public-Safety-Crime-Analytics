@@ -1,18 +1,24 @@
 {
-  "name": "cassandra-connector",
+  "name": "postgres-connector",
   "config": {
-    "connector.class": "io.debezium.connector.cassandra.CassandraConnector",
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
     "tasks.max": "1",
-    "cassandra.hosts": "cassandra",
-    "cassandra.port": "9042",
-    "cassandra.user": "${CASSANDRA_USER}",
-    "cassandra.password": "${CASSANDRA_PASSWORD}",
-    "cassandra.keyspace": "crime_data",
-    "cassandra.table.include.list": "crime_incidents",
-    "topic.prefix": "crime.data.events",
-    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
-    "value.converter.schemas.enable": "false",
+    "database.hostname": "host.docker.internal",
+    "database.port": "5432",
+    "database.user": "postgres",
+    "database.password": "hoaihai161104",
+    "database.dbname": "crime_data",
+    "database.server.name": "cdc",
+    "topic.prefix": "cdc",
+    "plugin.name": "pgoutput",
+    "table.include.list": "public.primary_type,public.crime,public.location,public.patrol_unit,public.case_report",
+    "snapshot.mode": "initial",
+    "publication.autocreate.mode": "filtered",
+    "slot.name": "slot_test5",
+    "heartbeat.interval.ms": "10000",
     "key.converter": "org.apache.kafka.connect.json.JsonConverter",
-    "key.converter.schemas.enable": "false"
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "key.converter.schemas.enable": "false",
+    "value.converter.schemas.enable": "false"
   }
 }
